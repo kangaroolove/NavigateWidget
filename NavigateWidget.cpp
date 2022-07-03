@@ -35,6 +35,10 @@ NavigateWidget::NavigateWidget(QWidget *parent)
     mTextPen.setColor(QColor(255, 255, 255));
     mButtonBorderPen.setColor(QColor(102, 164, 197));
 
+    SetText("Hello world");
+    SetPrevStepButtonText("Prev");
+    SetNextStepButtonText("Next");
+
     resize(FixWidgetHeight, 100);
 }
 
