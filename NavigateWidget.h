@@ -21,6 +21,7 @@ public:
 signals:
     void PressedPrevStepButton();
     void PressedNextStepButton();
+    void ResizeNavigateWidget();
 protected:
     void paintEvent(QPaintEvent *event);
     void mousePressEvent(QMouseEvent *event);
@@ -28,7 +29,8 @@ protected:
     QBrush mBackgroundBrush;
     QBrush mNextStepButtonBrush;
     QBrush mPrevStepButtonBrush;
-    QFont mFont;
+    QFont mTextFont;
+    QFont mButtonTextFont;
     QPen mTextPen;
     QRect mBoundingRect;
     QString mPrevStepText;
@@ -36,7 +38,7 @@ protected:
     QPen mButtonBorderPen;
     QRect mPrevStepButtonRect;
     QRect mNextStepButtonRect;
-    static const int Radius;
+    static const qreal Radius;
     static const int FixTextWidth;
     static const int FixWidgetHeight;
     static const int MarginLeft;
@@ -45,5 +47,7 @@ protected:
     static const int ButtonHeight;
     static const int ButtonWidth;
     static const int ButtonRadius;
+    static const int TextFontSize;
+    static const int ButtonFontSize;
 };
 #endif // NAVIGATEWIDGET_H

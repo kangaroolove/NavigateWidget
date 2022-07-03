@@ -5,7 +5,7 @@
 #include <QDebug>
 #include <QMouseEvent>
 
-const int NavigateWidget::Radius = 12;
+const qreal NavigateWidget::Radius = 12;
 const int NavigateWidget::FixTextWidth = 334;
 const int NavigateWidget::FixWidgetHeight = 430;
 const int NavigateWidget::MarginLeft = 48;
@@ -14,6 +14,8 @@ const int NavigateWidget::Spacing = 12;
 const int NavigateWidget::ButtonHeight = 30;
 const int NavigateWidget::ButtonWidth = 163;
 const int NavigateWidget::ButtonRadius = 4;
+const int NavigateWidget::TextFontSize = 15;
+const int NavigateWidget::ButtonFontSize = 13;
 
 NavigateWidget::NavigateWidget(QWidget *parent)
     : QWidget(parent)
@@ -27,9 +29,10 @@ NavigateWidget::NavigateWidget(QWidget *parent)
     mPrevStepButtonBrush.setColor(QColor(65, 134, 170, 69));
     mPrevStepButtonBrush.setStyle(Qt::SolidPattern);
 
-    mFont.setPixelSize(15);
-    mTextPen.setColor(QColor(255, 255, 255));
+    mTextFont.setPixelSize(TextFontSize);
+    mButtonTextFont.setPixelSize(ButtonFontSize);
 
+    mTextPen.setColor(QColor(255, 255, 255));
     mButtonBorderPen.setColor(QColor(102, 164, 197));
 
     resize(FixWidgetHeight, 100);
@@ -43,7 +46,7 @@ void NavigateWidget::SetText(const QString& text)
 {
     mText = text;
 
-    QFontMetrics fontMetrics(mFont);
+    QFontMetrics fontMetrics(mTextFont);
     QRect rect(0, 0, FixTextWidth, 0);
     mBoundingRect = fontMetrics.boundingRect(rect, Qt::AlignCenter | Qt::TextWrapAnywhere, text);
 
@@ -55,6 +58,8 @@ void NavigateWidget::SetText(const QString& text)
 
     QRect nextStepButtonRect(this->width() - MarginLeft - ButtonWidth, this->height() - MarginTop - ButtonHeight, ButtonWidth, ButtonHeight);
     mNextStepButtonRect = nextStepButtonRect;
+
+    emit ResizeNavigateWidget();
 }
 
 void NavigateWidget::SetPrevStepButtonText(const QString &text)
@@ -71,11 +76,10 @@ void NavigateWidget::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
     painter.setRenderHints(QPainter::Antialiasing);
-    painter.setFont(mFont);
 
     QPainterPath backgroundPath;
     backgroundPath.moveTo(Radius, 0);
-    backgroundPath.arcTo(0, 0, Radius * 2, Radius * 2, 90, 90);
+    backgroundPath.arcTo(0, 0, (Radius * 2), (Radius * 2), 90, 90);
     backgroundPath.lineTo(0, this->height());
     backgroundPath.lineTo(this->width(), this->height());
     backgroundPath.lineTo(this->width(), Radius);
@@ -84,15 +88,16 @@ void NavigateWidget::paintEvent(QPaintEvent *event)
     painter.fillPath(backgroundPath, mBackgroundBrush);
 
     painter.save();
+    painter.setFont(mTextFont);
     painter.setPen(mTextPen);
     painter.drawText(MarginLeft, MarginTop, FixTextWidth, mBoundingRect.height(), Qt::AlignCenter | Qt::TextWrapAnywhere, mText);
     painter.restore();
 
     painter.save();
-
     QPainterPath nextStepButtonPath;
     nextStepButtonPath.addRoundedRect(mNextStepButtonRect, ButtonRadius, ButtonRadius);
     painter.fillPath(nextStepButtonPath, mNextStepButtonBrush);
+    painter.setFont(mButtonTextFont);
     painter.setPen(mTextPen);
     painter.drawText(mNextStepButtonRect, Qt::AlignCenter, mNextStepText);
     painter.restore();
@@ -101,6 +106,7 @@ void NavigateWidget::paintEvent(QPaintEvent *event)
     QPainterPath prevStepButtonPath;
     prevStepButtonPath.addRoundedRect(mPrevStepButtonRect, ButtonRadius, ButtonRadius);
     painter.fillPath(prevStepButtonPath, mPrevStepButtonBrush);
+    painter.setFont(mButtonTextFont);
     painter.setPen(mTextPen);
     painter.drawText(mPrevStepButtonRect, Qt::AlignCenter, mPrevStepText);
     painter.setPen(mButtonBorderPen);
