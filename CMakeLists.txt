@@ -31,6 +31,9 @@ set(PROJECT_SOURCES
         main.cpp
         NavigateWidget.cpp
         NavigateWidget.h
+		widget.cpp
+		widget.h
+		widget.ui
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
