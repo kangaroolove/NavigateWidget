@@ -17,23 +17,31 @@ const int NavigateWidget::ButtonRadius = 4;
 const int NavigateWidget::TextFontSize = 15;
 const int NavigateWidget::ButtonFontSize = 13;
 
-NavigateWidget::NavigateWidget(QWidget *parent)
+NavigateWidget::NavigateWidget(QWidget* parent)
     : QWidget(parent)
+    , mBackgroundBrush(QColor(52, 63, 72))
+    , mGrayNormalBrush(QColor(86, 95, 103))
+    , mGrayHoverBrush(QColor(107, 115, 122))
+    , mGrayPressedBrush(QColor(38, 46, 53))
+    , mBlueNormalBrush(QColor(65, 134, 170))
+    , mBlueHoverBrush(QColor(54, 111, 141))
+    , mBluePressedBrush(QColor(47, 98, 124))
+    , mBorderNormalBrush(QColor(55, 82, 99))
+    , mBorderHoverBrush(QColor(46, 68, 82))
+    , mBorderPressedBrush(QColor(40, 60, 72))
+    , mPrevStepButtonHover(false)
+    , mPrevStepButtonPressed(false)
+    , mNextStepButtonHover(false)
+    , mNextStepButtonPressed(false)
+    , mPrevStepButtonStyle(ButtonStyle::BODER)
+    , mNextStepButtonStyle(ButtonStyle::BLUE)
+    , mTextPen(QColor(255, 255, 255))
+    , mButtonBorderPen(QColor(102, 164, 197))
 {
-    mBackgroundBrush.setColor(QColor(52, 63, 72));
-    mBackgroundBrush.setStyle(Qt::SolidPattern);
-
-    mNextStepButtonBrush.setColor(QColor(65, 134, 170));
-    mNextStepButtonBrush.setStyle(Qt::SolidPattern);
-
-    mPrevStepButtonBrush.setColor(QColor(65, 134, 170, 69));
-    mPrevStepButtonBrush.setStyle(Qt::SolidPattern);
+    this->setMouseTracking(true);
 
     mTextFont.setPixelSize(TextFontSize);
     mButtonTextFont.setPixelSize(ButtonFontSize);
-
-    mTextPen.setColor(QColor(255, 255, 255));
-    mButtonBorderPen.setColor(QColor(102, 164, 197));
 
     resize(FixWidgetHeight, 100);
 }
@@ -60,6 +68,8 @@ void NavigateWidget::SetText(const QString& text)
     mNextStepButtonRect = nextStepButtonRect;
 
     emit ResizeNavigateWidget();
+
+    update();
 }
 
 void NavigateWidget::SetPrevStepButtonText(const QString &text)
@@ -70,6 +80,16 @@ void NavigateWidget::SetPrevStepButtonText(const QString &text)
 void NavigateWidget::SetNextStepButtonText(const QString &text)
 {
     mNextStepText = text;
+}
+
+void NavigateWidget::SetPrevStepButtonStyle(const ButtonStyle& style)
+{
+    mPrevStepButtonStyle = style;
+}
+
+void NavigateWidget::SetNextStepButtonStyle(const ButtonStyle& style)
+{
+    mNextStepButtonStyle = style;
 }
 
 void NavigateWidget::paintEvent(QPaintEvent *event)
@@ -96,7 +116,7 @@ void NavigateWidget::paintEvent(QPaintEvent *event)
     painter.save();
     QPainterPath nextStepButtonPath;
     nextStepButtonPath.addRoundedRect(mNextStepButtonRect, ButtonRadius, ButtonRadius);
-    painter.fillPath(nextStepButtonPath, mNextStepButtonBrush);
+    DrawButtonBackground(painter, nextStepButtonPath, mNextStepButtonStyle, mNextStepButtonHover, mNextStepButtonPressed);
     painter.setFont(mButtonTextFont);
     painter.setPen(mTextPen);
     painter.drawText(mNextStepButtonRect, Qt::AlignCenter, mNextStepText);
@@ -105,12 +125,10 @@ void NavigateWidget::paintEvent(QPaintEvent *event)
     painter.save();
     QPainterPath prevStepButtonPath;
     prevStepButtonPath.addRoundedRect(mPrevStepButtonRect, ButtonRadius, ButtonRadius);
-    painter.fillPath(prevStepButtonPath, mPrevStepButtonBrush);
+    DrawButtonBackground(painter, prevStepButtonPath, mPrevStepButtonStyle, mPrevStepButtonHover, mPrevStepButtonPressed);
     painter.setFont(mButtonTextFont);
     painter.setPen(mTextPen);
     painter.drawText(mPrevStepButtonRect, Qt::AlignCenter, mPrevStepText);
-    painter.setPen(mButtonBorderPen);
-    painter.drawRoundedRect(mPrevStepButtonRect, ButtonRadius, ButtonRadius);
     painter.restore();
 }
 
@@ -121,6 +139,30 @@ void NavigateWidget::mousePressEvent(QMouseEvent *event)
         QPoint pos = event->pos();
         if (mPrevStepButtonRect.contains(pos))
         {
+            mPrevStepButtonPressed = true;
+            update();
+        }
+        else if (mNextStepButtonRect.contains(pos))
+        {
+            mNextStepButtonPressed = true;
+            update();
+        }
+    }
+
+    QWidget::mousePressEvent(event);
+}
+
+void NavigateWidget::mouseReleaseEvent(QMouseEvent* event)
+{
+    if (event->button() == Qt::LeftButton)
+    {
+        QPoint pos = event->pos();
+        mPrevStepButtonPressed = false;
+        mNextStepButtonPressed = false;
+        update();
+
+        if (mPrevStepButtonRect.contains(pos))
+        {
             emit PressedPrevStepButton();
         }
         else if (mNextStepButtonRect.contains(pos))
@@ -128,6 +170,89 @@ void NavigateWidget::mousePressEvent(QMouseEvent *event)
             emit PressedNextStepButton();
         }
     }
-    QWidget::mousePressEvent(event);
+
+    QWidget::mouseReleaseEvent(event);
+}
+
+void NavigateWidget::mouseMoveEvent(QMouseEvent* event)
+{
+    QPoint pos = event->pos();
+
+    if (mPrevStepButtonRect.contains(pos))
+    {
+        mPrevStepButtonHover = true;
+    }
+    else
+    {
+        mPrevStepButtonHover = false;
+    }
+
+    if (mNextStepButtonRect.contains(pos))
+    {
+        mNextStepButtonHover = true;
+    }
+    else
+    {
+        mNextStepButtonHover = false;
+    }
+
+    update();
+    QWidget::mouseMoveEvent(event);
+}
+
+void NavigateWidget::DrawButtonBackground(QPainter& painter, const QPainterPath& path, const ButtonStyle& style, const bool& hover, const bool& pressed)
+{
+    if (style == ButtonStyle::BLUE)
+    {
+        if (pressed)
+        {
+            painter.fillPath(path, mBluePressedBrush);
+        }
+        else if (hover)
+        {
+            painter.fillPath(path, mBlueHoverBrush);
+        }
+        else
+        {
+            painter.fillPath(path, mBlueNormalBrush);
+        }
+    }
+    else if (style == ButtonStyle::GRAY)
+    {
+        if (pressed)
+        {
+            painter.fillPath(path, mGrayPressedBrush);
+        }
+        else if (hover)
+        {
+            painter.fillPath(path, mGrayHoverBrush);
+        }
+        else
+        {
+            painter.fillPath(path, mGrayNormalBrush);
+        }
+    }
+    else if (style == ButtonStyle::BODER)
+    {
+        if (pressed)
+        {
+            painter.fillPath(path, mBorderPressedBrush);
+        }
+        else if (hover)
+        {
+            painter.fillPath(path, mBorderHoverBrush);
+        }
+        else
+        {
+            painter.fillPath(path, mBorderNormalBrush);
+        }
+        DrawButtonBorder(painter, path);
+    }
+}
+
+void NavigateWidget::DrawButtonBorder(QPainter& painter, const QPainterPath& path)
+{
+    painter.setPen(mButtonBorderPen);
+    painter.drawPath(path);
 }
 
